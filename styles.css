@@ -122,6 +122,13 @@ a:focus-visible {
   border-bottom: 2px solid var(--rule);
 }
 
+.game-row-status {
+  display: block;
+  color: var(--muted);
+  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  line-height: 1.2;
+}
+
 .game-title {
   color: var(--text);
   font-size: clamp(2.75rem, 5vw, 4.75rem);
@@ -162,6 +169,10 @@ a:focus-visible {
 
 .site-footer a {
   color: var(--accent);
+}
+
+noscript {
+  display: block;
 }
 
 @media (max-width: 720px) {
