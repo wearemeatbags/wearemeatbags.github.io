@@ -1,0 +1,202 @@
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --text: #050505;
+  --muted: #5f5f5f;
+  --rule: #0d0d0d;
+  --accent: #b8402c;
+  --focus: #111111;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.site-header,
+.page-shell,
+.site-footer {
+  width: min(100% - 40px, 1160px);
+  margin-inline: auto;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 44px 34px;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: clamp(84px, 10vw, 132px);
+  height: auto;
+  display: block;
+}
+
+.github-link {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.page-shell {
+  padding-block: clamp(56px, 9vw, 128px) clamp(88px, 12vw, 156px);
+}
+
+.intro {
+  max-width: 760px;
+}
+
+.intro h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(4rem, 10vw, 9.5rem);
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.intro p {
+  max-width: 600px;
+  margin: 28px 0 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 2.1vw, 2rem);
+  line-height: 1.3;
+}
+
+.games {
+  margin-top: clamp(64px, 9vw, 116px);
+}
+
+.game-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 2px solid var(--rule);
+}
+
+.game-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1fr) auto;
+  column-gap: clamp(28px, 6vw, 92px);
+  align-items: baseline;
+  min-height: 148px;
+  padding-block: 40px;
+  border-bottom: 2px solid var(--rule);
+}
+
+.game-title {
+  color: var(--text);
+  font-size: clamp(2.75rem, 5vw, 4.75rem);
+  font-weight: 900;
+  line-height: 0.95;
+  text-decoration: none;
+}
+
+.game-title:hover {
+  color: var(--accent);
+}
+
+.game-description {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.2rem, 2vw, 1.75rem);
+  line-height: 1.2;
+}
+
+.game-actions {
+  display: flex;
+  gap: 22px;
+  justify-content: flex-end;
+  white-space: nowrap;
+  font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+  line-height: 1.2;
+}
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 0 42px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.site-footer a {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .site-header,
+  .page-shell,
+  .site-footer {
+    width: min(100% - 28px, 1160px);
+  }
+
+  .site-header {
+    padding-block: 26px 28px;
+  }
+
+  .page-shell {
+    padding-block: 52px 88px;
+  }
+
+  .intro h1 {
+    font-size: clamp(3.4rem, 18vw, 5.5rem);
+  }
+
+  .game-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    align-items: start;
+    min-height: 0;
+    padding-block: 30px 34px;
+  }
+
+  .game-actions {
+    justify-content: flex-start;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    padding-block-end: 30px;
+  }
+}
