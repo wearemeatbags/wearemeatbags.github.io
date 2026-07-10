@@ -1,0 +1,132 @@
+name: Versioned game Pages deploy
+
+# Reusable workflow for Meatbags game repos. Every push to a caller's main
+# branch publishes the fresh build to the gh-pages root AND snapshots it to
+# versions/<short-sha>/ so every iteration stays playable forever. A manifest
+# at versions/index.json (newest first) lets games render a version picker.
+#
+# Caller contract (see boll/.github/workflows/pages.yml):
+#   uses: wearemeatbags/wearemeatbags.github.io/.github/workflows/versioned-game-pages.yml@main
+#   with:
+#     game: boll                  # slug, used in deploy commit messages
+#     node_version: "24"          # optional; empty skips Node setup
+#     install_command: npm ci     # optional; empty skips install
+#     build_command: npm run build
+#     output_directory: dist
+
+on:
+  workflow_call:
+    inputs:
+      game:
+        description: Game slug used in deploy commit messages
+        required: true
+        type: string
+      node_version:
+        description: Node version to set up (empty string skips Node setup)
+        required: false
+        type: string
+        default: ""
+      install_command:
+        description: Dependency install command (empty string skips install)
+        required: false
+        type: string
+        default: ""
+      build_command:
+        description: Command that produces the site in output_directory
+        required: true
+        type: string
+      output_directory:
+        description: Directory containing the built site
+        required: false
+        type: string
+        default: dist
+
+concurrency:
+  group: versioned-game-pages-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - name: Check out game source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: inputs.node_version != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install dependencies
+        if: inputs.install_command != ''
+        run: ${{ inputs.install_command }}
+
+      - name: Build
+        run: ${{ inputs.build_command }}
+
+      - name: Compose versioned site and publish to gh-pages
+        env:
+          OUTPUT_DIR: ${{ inputs.output_directory }}
+          GAME: ${{ inputs.game }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "$OUTPUT_DIR/index.html" ]; then
+            echo "::error::No index.html found in '$OUTPUT_DIR' after build"
+            exit 1
+          fi
+
+          SHORT_SHA="$(git rev-parse --short=7 HEAD)"
+          COMMIT_DATE="$(git log -1 --pretty=%cI)"
+          COMMIT_MESSAGE="$(git log -1 --pretty=%s)"
+
+          SITE="$(mktemp -d)"
+
+          # Root of the site is always the newest build.
+          cp -R "$OUTPUT_DIR"/. "$SITE/"
+
+          # Preserve every previously published snapshot.
+          if git fetch --depth=1 origin gh-pages 2>/dev/null; then
+            if git cat-file -e FETCH_HEAD:versions 2>/dev/null; then
+              git archive FETCH_HEAD versions | tar -x -C "$SITE"
+            fi
+          fi
+
+          # Snapshot this build (pure build output, no nested versions dir).
+          mkdir -p "$SITE/versions/$SHORT_SHA"
+          cp -R "$OUTPUT_DIR"/. "$SITE/versions/$SHORT_SHA/"
+
+          # Upsert the manifest: newest first, re-deploys of a sha replace
+          # their old entry instead of duplicating it.
+          MANIFEST="$SITE/versions/index.json"
+          [ -f "$MANIFEST" ] || echo "[]" > "$MANIFEST"
+          jq --arg id "$SHORT_SHA" --arg date "$COMMIT_DATE" --arg message "$COMMIT_MESSAGE" \
+            '[{id: $id, date: $date, message: $message}] + [.[] | select(.id != $id)]' \
+            "$MANIFEST" > "$MANIFEST.tmp"
+          mv "$MANIFEST.tmp" "$MANIFEST"
+
+          touch "$SITE/.nojekyll"
+
+          cd "$SITE"
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy $GAME $SHORT_SHA"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+
+      - name: Ensure GitHub Pages serves gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" \
+            -f build_type=legacy -f 'source[branch]=gh-pages' -f 'source[path]=/' >/dev/null 2>&1; then
+            echo "GitHub Pages enabled for ${GITHUB_REPOSITORY}"
+          else
+            echo "GitHub Pages already configured; skipping"
+          fi
